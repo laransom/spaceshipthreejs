@@ -8,6 +8,8 @@ require([ 'bower_components/threex.spaceships/package.require.js'
 		    , 'bower_components/threex.spaceships/examples/vendor/three.js/examples/js/loaders/OBJMTLLoader.js'
 		    , 'bower_components/threex.spaceships/examples/vendor/three.js/examples/js/loaders/OBJLoader.js'
 		    , 'bower_components/threex.spaceships/examples/vendor/three.js/examples/js/loaders/MTLLoader.js'
+		    , 'bower_components/threex.keyboardstate/package.require.js'
+		    , 'bower_components/threex.planets/package.require.js'
         ],
 	function(){
 	// detect WebGL
@@ -43,18 +45,57 @@ require([ 'bower_components/threex.spaceships/package.require.js'
 	backLight.position.set(-0.5, -0.5, -2)
 	scene.add( backLight )
 
-	//////////////////////////////////////////////////////////////////////////////////
-	//		add an object and make it move					//
-	//////////////////////////////////////////////////////////////////////////////////
-	var geometry	= new THREE.CubeGeometry( 1, 1, 1);
-	var material	= new THREE.MeshPhongMaterial();
-	var mesh	= new THREE.Mesh( geometry, material );
-	scene.add( mesh );
+	var geometry = new THREE.SphereGeometry(90, 32, 32)
+
+	var url   = 'bower_components/threex.planets/examples/images/galaxy_starfield.png'
+
+	var material = new THREE.MeshBasicMaterial({
+		map :THREE.ImageUtils.loadTexture(url),
+		side :THREE.BackSide
+	})
+
+	var starSphere = new THREE.Mesh(geometry, material)
+	scene.add(starSphere)
+
+	var spaceship   = null;
+	THREEx.SpaceShips.loadSpaceFighter03(function(object3d){
+   scene.add(object3d)
+   spaceship   = object3d
+
+   spaceship.rotateY(Math.PI/2)
+   spaceship.position.x = -1
+	})
+
+	var keyboard = new THREEx.KeyboardState();
 
 	onRenderFcts.push(function(delta, now){
-		mesh.rotateX(0.5 * delta);
-		mesh.rotateY(2.0 * delta);
+
+		if( spaceship === null ) return;
+
+		var speed = 1;
+
+		if( keyboard.pressed('down') ) {
+			spaceship.position.y -= speed * delta;
+		} else if( keyboard.pressed('up') ){
+			spaceship.position.y += speed * delta;
+		}
 	})
+
+	var moonMesh = THREEx.Planets.createMoon()
+	scene.add(moonMesh)
+
+	function resetMoon(){
+		moonMesh.position.x = 5
+		moonMesh.position.x += 5 * (Math.random()-0.5)
+		moonMesh.position.y = 2 * (Math.random()-0.5)
+	}
+	resetMoon()
+
+	onRenderFcts.push(function(delta, now){
+		moonMesh.position.x += -1 * delta;
+		if( moonMesh.position.x < -3 ) resetMoon()
+	})
+
 
 	//////////////////////////////////////////////////////////////////////////////////
 	//		Camera Controls							//
