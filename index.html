@@ -10,6 +10,7 @@ require([ 'bower_components/threex.spaceships/package.require.js'
 		    , 'bower_components/threex.spaceships/examples/vendor/three.js/examples/js/loaders/MTLLoader.js'
 		    , 'bower_components/threex.keyboardstate/package.require.js'
 		    , 'bower_components/threex.planets/package.require.js'
+		    , 'bower_components/webaudiox/build/webaudiox.js'
         ],
 	function(){
 	// detect WebGL
@@ -47,7 +48,7 @@ require([ 'bower_components/threex.spaceships/package.require.js'
 
 	var geometry = new THREE.SphereGeometry(90, 32, 32)
 
-	var url   = 'bower_components/threex.planets/examples/images/galaxy_starfield.png'
+	var url   = 'bower_components/threex.planets/images/galaxy_starfield.png'
 
 	var material = new THREE.MeshBasicMaterial({
 		map :THREE.ImageUtils.loadTexture(url),
@@ -95,6 +96,36 @@ require([ 'bower_components/threex.spaceships/package.require.js'
 		moonMesh.position.x += -1 * delta;
 		if( moonMesh.position.x < -3 ) resetMoon()
 	})
+
+	onRenderFcts.push(function(delta, now){
+		if( spaceship === null ) return
+
+		var distance = moonMesh.position.distanceTo(spaceship.position)
+		if( distance < 0.3 ){
+			playExplosionSound()
+			resetMoon()
+		}
+	})
+
+	var context = new AudioContext()
+	var lineOut = new WebAudiox.LineOut(context)
+	lineOut.volume = 0.2
+
+	var soundBuffer;
+
+	var soundUrl = 'sounds/86026__harpoyume__explosion-3.aif'
+	WebAudiox.loadBuffer(context, soundUrl, function(buffer){
+		soundBuffer = buffer
+	})
+
+	function playExplosionSound(){
+		if( !soundBuffer ) return
+		var source = context.createBufferSource()
+		source.buffer = soundBuffer
+		source.connect(lineOut.destination)
+		source.start(0)
+		return source
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////////////
